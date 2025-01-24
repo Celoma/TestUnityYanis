@@ -1,78 +1,84 @@
 using UnityEngine;
 
-public class CarControl : MonoBehaviour
+public class CarController : MonoBehaviour
 {
-    public float motorTorque = 6000;            // Couple moteur élevé pour une accélération puissante
-    public float brakeTorque = 8000;            // Couple de freinage puissant pour un arrêt rapide
-    public float maxSpeed = 80;                 // Vitesse maximale élevée pour refléter les performances d'une F1
-    public float steeringRange = 15;            // Direction précise mais pas trop large
-    public float steeringRangeAtMaxSpeed = 5;   // Réduction importante de l'angle de direction à grande vitesse pour plus de stabilité
-    public float centreOfGravityOffset = -0.5f;
+    [Header("Wheel Colliders")]
+    public WheelCollider frontLeftWheel;
+    public WheelCollider frontRightWheel;
+    public WheelCollider rearLeftWheel;
+    public WheelCollider rearRightWheel;
 
-    public float CurrentSpeed { get; private set; } // Vitesse actuelle en km/h (lecture seule)
+    [Header("Car Settings")]
+    public float motorForce = 1000f;
+    public float brakeForce = 3000f;
+    public float maxSteerAngle = 15f; // Reduced steering angle
 
-    WheelControl[] wheels;
-    Rigidbody rigidBody;
+    [Header("Stability Control")]
+    public float stabilityForce = 10f;
+    public float centerOfMassOffset = -0.7f;
+    public float tractionControl = 0.95f; // Traction control multiplier
 
-    // Start is called before the first frame update
-    void Start()
+    private Rigidbody carRigidbody;
+    private float horizontalInput;
+    private float verticalInput;
+
+    private void Start()
     {
-        rigidBody = GetComponent<Rigidbody>();
-
-        // Adjust center of mass vertically, to help prevent the car from rolling
-        rigidBody.centerOfMass += Vector3.up * centreOfGravityOffset;
-
-        // Find all child GameObjects that have the WheelControl script attached
-        wheels = GetComponentsInChildren<WheelControl>();
+        carRigidbody = GetComponent<Rigidbody>();
+        carRigidbody.centerOfMass = new Vector3(0, centerOfMassOffset, 0);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void FixedUpdate()
     {
-        float vInput = Input.GetAxis("Vertical");
-        float hInput = Input.GetAxis("Horizontal");
+        GetInput();
+        HandleMotor();
+        HandleSteering();
+        ApplyStabilityControl();
+    }
 
-        // Calculate current speed in relation to the forward direction of the car
-        float forwardSpeed = Vector3.Dot(transform.forward, rigidBody.linearVelocity);
+    private void GetInput()
+    {
+        verticalInput = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
+        horizontalInput = Input.GetKey(KeyCode.A) ? -1 : Input.GetKey(KeyCode.D) ? 1 : 0;
+    }
 
-        // Update CurrentSpeed (convert m/s to km/h)
-        CurrentSpeed = rigidBody.linearVelocity.magnitude * 3.6f;
+    private void HandleMotor()
+    {
+        float currentSpeed = carRigidbody.linearVelocity.magnitude;
+        
+        // Reduce motor force at high speeds and during turning
+        float adjustedMotorForce = motorForce * Mathf.Lerp(1f, 0.5f, 
+            Mathf.Abs(horizontalInput) * currentSpeed / 50f);
 
-        // Calculate how close the car is to top speed
-        float speedFactor = Mathf.InverseLerp(0, maxSpeed, forwardSpeed);
+        // Apply traction control
+        rearLeftWheel.motorTorque = verticalInput * adjustedMotorForce * tractionControl;
+        rearRightWheel.motorTorque = verticalInput * adjustedMotorForce * tractionControl;
+    }
 
-        // Use that to calculate how much torque is available 
-        float currentMotorTorque = Mathf.Lerp(motorTorque, 0, speedFactor);
+    private void HandleSteering()
+    {
+        // Progressive steering reduction at high speeds
+        float currentSpeed = carRigidbody.linearVelocity.magnitude;
+        float dynamicSteerAngle = Mathf.Lerp(maxSteerAngle, 5f, currentSpeed / 30f);
 
-        // …and to calculate how much to steer 
-        float currentSteerRange = Mathf.Lerp(steeringRange, steeringRangeAtMaxSpeed, speedFactor);
+        frontLeftWheel.steerAngle = horizontalInput * dynamicSteerAngle;
+        frontRightWheel.steerAngle = horizontalInput * dynamicSteerAngle;
+    }
 
-        // Check whether the user input is in the same direction 
-        bool isAccelerating = Mathf.Sign(vInput) == Mathf.Sign(forwardSpeed);
-
-        foreach (var wheel in wheels)
+    private void ApplyStabilityControl()
+    {
+        // Advanced stability control
+        Vector3 localVelocity = transform.InverseTransformDirection(carRigidbody.linearVelocity);
+        
+        // Limit lateral slip
+        float lateralSlip = Mathf.Abs(localVelocity.x);
+        if (lateralSlip > 5f)
         {
-            // Apply steering to Wheel colliders that have "Steerable" enabled
-            if (wheel.steerable)
-            {
-                wheel.WheelCollider.steerAngle = hInput * currentSteerRange;
-            }
-            
-            if (isAccelerating)
-            {
-                // Apply torque to Wheel colliders that have "Motorized" enabled
-                if (wheel.motorized)
-                {
-                    wheel.WheelCollider.motorTorque = vInput * currentMotorTorque;
-                }
-                wheel.WheelCollider.brakeTorque = 0;
-            }
-            else
-            {
-                // If the user is trying to go in the opposite direction
-                wheel.WheelCollider.brakeTorque = Mathf.Abs(vInput) * brakeTorque;
-                wheel.WheelCollider.motorTorque = 0;
-            }
+            Vector3 stabilityTorque = -carRigidbody.angularVelocity * stabilityForce;
+            carRigidbody.AddTorque(stabilityTorque);
         }
+
+        // Additional downforce
+        carRigidbody.AddForce(-transform.up * carRigidbody.linearVelocity.magnitude * stabilityForce);
     }
 }

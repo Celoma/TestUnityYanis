@@ -6,7 +6,6 @@ public class ButtonScript : MonoBehaviour
 {
     Button buttonStart;
     Button buttonExit;
-
     void Start()
     {
         // Récupère les boutons depuis la scène
@@ -16,6 +15,9 @@ public class ButtonScript : MonoBehaviour
         // Ajoute les listeners pour chaque bouton
         buttonStart.onClick.AddListener(OnStartButtonClick);
         buttonExit.onClick.AddListener(OnExitButtonClick);
+
+        // Unload the scene
+        SceneManager.UnloadSceneAsync("TestScene");
     }
 
     void OnStartButtonClick()
