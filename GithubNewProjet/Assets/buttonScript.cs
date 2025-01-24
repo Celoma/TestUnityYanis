@@ -20,7 +20,7 @@ public class ButtonScript : MonoBehaviour
 
     void OnStartButtonClick()
     {
-        SceneManager.LoadScene("Voiture");
+        SceneManager.LoadScene("TestScene");
     }
 
     void OnExitButtonClick()
