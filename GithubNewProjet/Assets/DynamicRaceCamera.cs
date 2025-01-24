@@ -40,7 +40,9 @@ public class DynamicRaceCamera : MonoBehaviour
 
         // Ajustez la position Z de la caméra (profondeur)
         float currentZOffset = Mathf.Lerp(minZOffset, maxZOffset, speedPercentage);
-        Vector3 targetOffset = new Vector3(offset.x, offset.y, -currentZOffset);
+        float currentYOffset = Mathf.Lerp(4, 2, speedPercentage);
+
+        Vector3 targetOffset = new Vector3(offset.x, currentYOffset, -currentZOffset);
 
         // Calculez la position souhaitée de la caméra
         Vector3 desiredPosition = target.position + target.TransformDirection(targetOffset);
