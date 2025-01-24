@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // Nécessaire pour changer de scène
+using UnityEngine.SceneManagement;
 
 public class ButtonScript : MonoBehaviour
 {
@@ -20,8 +20,7 @@ public class ButtonScript : MonoBehaviour
 
     void OnStartButtonClick()
     {
-        // Change la scène (remplace "SceneName" par le nom exact de votre scène)
-        SceneManager.LoadScene("TestScene");
+        SceneManager.LoadScene("Voiture");
     }
 
     void OnExitButtonClick()
