@@ -9,18 +9,19 @@ public class CarController : MonoBehaviour
     public WheelCollider rearRightWheel;
 
     [Header("Car Settings")]
-    public float motorForce = 1000f;
-    public float brakeForce = 3000f;
-    public float maxSteerAngle = 15f; // Reduced steering angle
+    public float motorForce = 3000f;
+    public float brakeForce = 8000f;
+    public float maxSteerAngle = 15f;
 
     [Header("Stability Control")]
     public float stabilityForce = 10f;
     public float centerOfMassOffset = -0.7f;
-    public float tractionControl = 0.95f; // Traction control multiplier
+    public float tractionControl = 0.95f;
 
     private Rigidbody carRigidbody;
     private float horizontalInput;
     private float verticalInput;
+    private bool isBraking;
 
     private void Start()
     {
@@ -38,26 +39,60 @@ public class CarController : MonoBehaviour
 
     private void GetInput()
     {
-        verticalInput = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
-        horizontalInput = Input.GetKey(KeyCode.A) ? -1 : Input.GetKey(KeyCode.D) ? 1 : 0;
+        // Separate controls for forward, brake, and reverse
+        verticalInput = Input.GetKey(KeyCode.W) ? 1 : 
+                        Input.GetKey(KeyCode.S) ? -1 : 0;
+        horizontalInput = Input.GetKey(KeyCode.A) ? -1 : 
+                          Input.GetKey(KeyCode.D) ? 1 : 0;
+        isBraking = Input.GetKey(KeyCode.Space);
     }
 
     private void HandleMotor()
     {
         float currentSpeed = carRigidbody.linearVelocity.magnitude;
         
-        // Reduce motor force at high speeds and during turning
-        float adjustedMotorForce = motorForce * Mathf.Lerp(1f, 0.5f, 
-            Mathf.Abs(horizontalInput) * currentSpeed / 50f);
+        if (isBraking)
+        {
+            // Apply full brake force when spacebar is pressed
+            ApplyBraking(brakeForce);
+            verticalInput = 0; // Prevent motor input during braking
+        }
+        else if (verticalInput > 0)
+        {
+            // Forward motion
+            float adjustedMotorForce = motorForce * Mathf.Lerp(1f, 0.5f, 
+                Mathf.Abs(horizontalInput) * currentSpeed / 50f);
 
-        // Apply traction control
-        rearLeftWheel.motorTorque = verticalInput * adjustedMotorForce * tractionControl;
-        rearRightWheel.motorTorque = verticalInput * adjustedMotorForce * tractionControl;
+            rearLeftWheel.motorTorque = adjustedMotorForce * tractionControl;
+            rearRightWheel.motorTorque = adjustedMotorForce * tractionControl;
+            ApplyBraking(0); // Release brakes
+        }
+        else if (verticalInput < 0)
+        {
+            // Reverse motion
+            rearLeftWheel.motorTorque = motorForce * tractionControl * -1;
+            rearRightWheel.motorTorque = motorForce * tractionControl * -1;
+            ApplyBraking(0); // Release brakes
+        }
+        else
+        {
+            // No input
+            rearLeftWheel.motorTorque = 0;
+            rearRightWheel.motorTorque = 0;
+            ApplyBraking(brakeForce * 0.5f); // Soft brake
+        }
+    }
+
+    private void ApplyBraking(float brakeAmount)
+    {
+        frontLeftWheel.brakeTorque = brakeAmount;
+        frontRightWheel.brakeTorque = brakeAmount;
+        rearLeftWheel.brakeTorque = brakeAmount;
+        rearRightWheel.brakeTorque = brakeAmount;
     }
 
     private void HandleSteering()
     {
-        // Progressive steering reduction at high speeds
         float currentSpeed = carRigidbody.linearVelocity.magnitude;
         float dynamicSteerAngle = Mathf.Lerp(maxSteerAngle, 5f, currentSpeed / 30f);
 
@@ -67,10 +102,8 @@ public class CarController : MonoBehaviour
 
     private void ApplyStabilityControl()
     {
-        // Advanced stability control
         Vector3 localVelocity = transform.InverseTransformDirection(carRigidbody.linearVelocity);
         
-        // Limit lateral slip
         float lateralSlip = Mathf.Abs(localVelocity.x);
         if (lateralSlip > 5f)
         {
@@ -78,7 +111,6 @@ public class CarController : MonoBehaviour
             carRigidbody.AddTorque(stabilityTorque);
         }
 
-        // Additional downforce
         carRigidbody.AddForce(-transform.up * carRigidbody.linearVelocity.magnitude * stabilityForce);
     }
 }

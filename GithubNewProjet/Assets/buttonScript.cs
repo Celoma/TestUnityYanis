@@ -17,12 +17,12 @@ public class ButtonScript : MonoBehaviour
         buttonExit.onClick.AddListener(OnExitButtonClick);
 
         // Unload the scene
-        SceneManager.UnloadSceneAsync("TestScene");
+        SceneManager.UnloadSceneAsync("Course");
     }
 
     void OnStartButtonClick()
     {
-        SceneManager.LoadScene("TestScene");
+        SceneManager.LoadScene("Course");
     }
 
     void OnExitButtonClick()

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RespawnThis : MonoBehaviour
 {
-    private Vector3 respawnPosition = new Vector3(0, 1, 0); // Position de respawn (0, 1, 0)
+    private Vector3 respawnPosition = new Vector3(90, 0, -20); // Position de respawn (0, 1, 0)
     private Rigidbody rb;
 
     void Start()
@@ -26,7 +26,8 @@ public class RespawnThis : MonoBehaviour
         transform.position = respawnPosition;
 
         // Réinitialiser la rotation de l'objet
-        transform.rotation = Quaternion.identity;
+
+        transform.rotation = new Quaternion(0, 0, 0, -90);
 
         // Si l'objet a un Rigidbody, réinitialiser sa vitesse
         if (rb != null)
