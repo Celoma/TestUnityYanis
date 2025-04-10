@@ -1,12 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // Nécessaire pour changer de scène
+using UnityEngine.SceneManagement;
 
 public class ButtonScript : MonoBehaviour
 {
     Button buttonStart;
     Button buttonExit;
-
     void Start()
     {
         // Récupère les boutons depuis la scène
@@ -16,12 +15,14 @@ public class ButtonScript : MonoBehaviour
         // Ajoute les listeners pour chaque bouton
         buttonStart.onClick.AddListener(OnStartButtonClick);
         buttonExit.onClick.AddListener(OnExitButtonClick);
+
+        // Unload the scene
+        SceneManager.UnloadSceneAsync("Course");
     }
 
     void OnStartButtonClick()
     {
-        // Change la scène (remplace "SceneName" par le nom exact de votre scène)
-        SceneManager.LoadScene("TestScene");
+        SceneManager.LoadScene("Course");
     }
 
     void OnExitButtonClick()
