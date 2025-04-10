@@ -15248,7 +15248,7 @@ MonoBehaviour:
   frontRightWheel: {fileID: 959152744}
   rearLeftWheel: {fileID: 78011482}
   rearRightWheel: {fileID: 315149557}
-  motorForce: 2000
+  motorForce: 1000
   brakeForce: 3000
   maxSteerAngle: 30
   stabilityForce: 5

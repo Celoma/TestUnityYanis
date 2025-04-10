@@ -9,13 +9,13 @@ public class CarController : MonoBehaviour
     public WheelCollider rearRightWheel;
 
     [Header("Car Settings")]
-    public float motorForce = 3000f;
-    public float brakeForce = 8000f;
-    public float maxSteerAngle = 15f;
+    public float motorForce = 5000f;
+    public float brakeForce = 3000;
+    public float maxSteerAngle = 60f;
 
     [Header("Stability Control")]
-    public float stabilityForce = 10f;
-    public float centerOfMassOffset = -0.7f;
+    public float stabilityForce = 05f;
+    public float centerOfMassOffset = -0.5f;
     public float tractionControl = 0.95f;
 
     private Rigidbody carRigidbody;
